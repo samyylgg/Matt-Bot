@@ -1,4 +1,4 @@
-import { create, Client } from '@whiskeysockets/baileys';
+import { create } from '@whiskeysockets/baileys';
 import acciones from './src/acciones.js';
 import admin from './src/admin.js';
 import juegos from './src/juegos.js';
@@ -18,12 +18,15 @@ async function startBot() {
   client.ev.on('messages.upsert', async (m) => {
     try {
       if (!m.messages || m.type !== 'notify') return;
+
       const msg = m.messages[0];
       if (!msg.message || msg.key.fromMe) return;
 
-      const text = msg.message.conversation ||
-                   msg.message.extendedTextMessage?.text ||
-                   '';
+      // Obtener texto del mensaje (soporta mensajes simples y extendidos)
+      const text =
+        msg.message.conversation ||
+        msg.message.extendedTextMessage?.text ||
+        '';
 
       const texto = text.toLowerCase();
 
@@ -31,50 +34,53 @@ async function startBot() {
       for (const clave in respuestas) {
         if (texto.includes(clave)) {
           const reply = getRandom(respuestas[clave]);
-          await client.sendMessage(msg.key.remoteJid, { text: reply });
-          return; // No procesar más si respondió aquí
+          await client.sendMessage(msg.key.remoteJid, { text: reply }, { quoted: msg });
+          return; // Si respondió aquí, no procesar más
         }
       }
 
-      // Solo procesar comandos que inician con prefix
-      if (!text.startsWith(prefix)) return;
+      // Procesar solo mensajes que inician con el prefijo
+      if (!texto.startsWith(prefix)) return;
 
-      const args = text.slice(prefix.length).trim().split(/ +/);
-      const command = args.shift().toLowerCase();
+      // Extraer comando y argumentos
+      const args = texto.slice(prefix.length).trim().split(/ +/);
+      const command = args.shift();
 
+      // Listas de comandos para cada módulo
       const adminCommands = ['tag', 'grupo abrir', 'grupo cerrar', 'setreglas', 'reglas', 'ban', 'anclar', 'desanclar', 'modo lento'];
       const accionesList = ['abrazar', 'besar', 'saludar', 'acariciar', 'reir', 'llorar', 'dormir', 'bailar', 'cantar', 'enojar', 'pensar', 'saludarmanos', 'saltar', 'comer', 'beber', 'patear', 'chocar', 'empujar', 'saludarHola'];
       const juegosList = ['piedrapapeltijera', 'unirse', 'piedra', 'papel', 'tijera'];
-      const extrasList = ['meme', 'hora', 'fecha', 'frase', 'say', 'dog', 'info', 'ping', 'chiste', 'gif'];
+      const extrasList = ['meme', 'hora', 'fecha', 'frase', 'say', 'dog', 'info', 'ping', 'chiste', 'gif', 'menu', 'profile'];
       const premiumList = ['trivia', 'play', 'sorteo', 'clima', 'traducir'];
 
+      // Ejecutar el módulo correspondiente
       if (adminCommands.includes(command)) {
-        await admin(client, msg, command);
+        await admin(client, msg, command, args);
         return;
       }
 
       if (accionesList.includes(command)) {
-        await acciones(client, msg, command);
+        await acciones(client, msg, command, args);
         return;
       }
 
       if (juegosList.includes(command)) {
-        await juegos(client, msg, command);
+        await juegos(client, msg, command, args);
         return;
       }
 
       if (extrasList.includes(command)) {
-        await extras(client, msg, command);
+        await extras(client, msg, command, args);
         return;
       }
 
       if (premiumList.includes(command)) {
-        await premium(client, msg, command);
+        await premium(client, msg, command, args);
         return;
       }
 
-      // Comando no reconocido
-      await msg.reply('Comando no reconocido, usa .help para ver la lista.');
+      // Si el comando no está reconocido
+      await client.sendMessage(msg.key.remoteJid, { text: 'Comando no reconocido, usa .menu para ver la lista.' }, { quoted: msg });
 
     } catch (error) {
       console.error('Error en messages.upsert:', error);
@@ -83,6 +89,7 @@ async function startBot() {
 
   client.ev.on('connection.update', (update) => {
     const { connection, lastDisconnect } = update;
+
     if (connection === 'close') {
       console.log('Conexión cerrada, intentando reconectar...');
       if (lastDisconnect?.error?.output?.statusCode !== 401) {
@@ -94,7 +101,7 @@ async function startBot() {
   });
 
   client.ev.on('creds.update', () => {
-    // Guardar credenciales si usas persistencia
+    // Aquí guardar credenciales si tienes persistencia
   });
 }
 
