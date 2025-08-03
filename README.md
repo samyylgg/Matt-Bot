@@ -45,3 +45,12 @@ Instala Node.js desde https://nodejs.org (versión 16 o superior).
 cd Matt-Bot
 npm install
 npm start
+ 
+## Créditos
+
+Creado por Sam (https://github.com/samyylgg)
+Basado en @whiskeysockets/baileys
+
+## Soporte
+
+Para bugs o sugerencias abre un issue en el repositorio.
