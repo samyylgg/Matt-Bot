@@ -1,6 +1,6 @@
 # Matt-Bot 🚬
 
-![Matt-Bot Image](https://i.pinimg.com/originals/5n/h2/if/5nh2ifsz5.jpg)
+![Matt-Bot Image](https://images.app.goo.gl/Nx6CHnCxMvu4rh629)
 
 Bot de WhatsApp multi-dispositivo basado en `@whiskeysockets/baileys`.  
 Desarrollado por Sam.
