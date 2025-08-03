@@ -25,7 +25,7 @@ Desarrollado por Sam.
 - Termux (en Android) o PC con Windows/Linux/Mac  
 - Conexión a Internet
 
----
+
 
 ## Instalación en Termux (Android)
 
@@ -33,24 +33,49 @@ Desarrollado por Sam.
 
    ```bash
    pkg update && pkg upgrade
-   pkg install nodejs git ffmpeg
+   
+   pkg install nodejs git ffmpe
+ 
    git clone https://github.com/samyylgg/Matt-Bot.git
    cd Matt-Bot
+
    npm install
+
    npm start
-  ## Instalación en PC
-  ```bash
-Instala Node.js desde https://nodejs.org (versión 16 o superior).
-  git clone https://github.com/samyylgg/Matt-Bot.git
-cd Matt-Bot
-npm install
-npm start
- 
+
+
+## Uso
+
+Todos los comandos usan el prefijo . (punto).
+
+Puedes usar .menu para ver la lista completa de comandos disponibles.
+
+
+## Estructura del proyecto
+
+Matt-Bot/
+├─ src/
+│  ├─ acciones.js
+│  ├─ admin.js
+│  ├─ juegos.js
+│  ├─ extras.js
+│  ├─ premium.js
+│  ├─ respuestas.js
+├─ data/ (aquí puedes guardar JSON para monedas, niveles, config)
+├─ index.js
+├─ package.json
+└─ README.md
+
+
+
 ## Créditos
 
 Creado por Sam (https://github.com/samyylgg)
 Basado en @whiskeysockets/baileys
 
+
 ## Soporte
 
 Para bugs o sugerencias abre un issue en el repositorio.
+
+## ¡Disfruta tu Matt-Bot! 🤖✨
