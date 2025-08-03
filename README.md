@@ -32,6 +32,8 @@ Desarrollado por Sam.
 1. Abre Termux y actualiza paquetes:
 
    ```bash
+   termux-setup-storage
+   
    pkg update && pkg upgrade
    
    pkg install nodejs git ffmpe
