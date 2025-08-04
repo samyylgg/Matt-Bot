@@ -1,97 +1,128 @@
-const { create, useSingleFileAuthState } = require('@whiskeysockets/baileys')
-const admin = require('./src/admin.js')
-const acciones = require('./src/acciones.js')
-const juegos = require('./src/juegos.js')
-const extras = require('./src/extras.js')
-const premium = require('./src/premium.js')
-const { respuestas } = require('./src/respuestas.js')
+const { default: makeWASocket, useSingleFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
+const P = require('pino');
+const cfonts = require('cfonts');
+const { Boom } = require('@hapi/boom');
 
+// Importar tus módulos
+const admin = require('./src/admin.js');
+const acciones = require('./src/acciones.js');
+const juegos = require('./src/juegos.js');
+const extras = require('./src/extras.js');
+const premium = require('./src/premium.js');
+const { respuestas } = require('./src/respuestas.js');
 const {
   coinsCommand,
   trabajarCommand,
   addCoinsCommand,
   getCoins,
   addCoins
-} = require('./src/monedas.js')
-
+} = require('./src/monedas.js');
 const {
   nivelCommand,
   addNivelCommand,
   getNivel,
   addNivel
-} = require('./src/niveles.js')
+} = require('./src/niveles.js');
+const { getXP, addXP, resetXP } = require('./src/xp.js');
 
-const { getXP, addXP, resetXP } = require('./src/xp.js')
+const prefix = '.';
 
-const prefix = '.'
-const { state, saveState } = useSingleFileAuthState('./auth_info_multi.json')
+const { state, saveState } = useSingleFileAuthState('./auth_info_multi.json');
 
 function getRandom(arr) {
-  return arr[Math.floor(Math.random() * arr.length)]
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
 async function startBot() {
-  const client = await create({
-    auth: state,
-    printQRInTerminal: true
-  })
+  cfonts.say('Matt-Bot', {
+    font: 'block',
+    align: 'center',
+    colors: ['cyan'],
+    background: 'transparent',
+    letterSpacing: 1,
+    lineHeight: 1,
+    space: true,
+    maxLength: '0',
+  });
 
-  client.ev.on('creds.update', saveState)
+  const { version } = await fetchLatestBaileysVersion();
+
+  const client = makeWASocket({
+    version,
+    printQRInTerminal: true,
+    auth: state,
+    logger: P({ level: 'silent' }),
+  });
+
+  client.ev.on('creds.update', saveState);
+
+  client.ev.on('connection.update', (update) => {
+    const { connection, lastDisconnect } = update;
+    if (connection === 'close') {
+      const statusCode = lastDisconnect?.error?.output?.statusCode || null;
+      console.log('Conexión cerrada:', statusCode);
+      if (statusCode !== DisconnectReason.loggedOut) {
+        console.log('Intentando reconectar...');
+        startBot();
+      } else {
+        console.log('Error de autenticación, elimina auth_info_multi.json y vuelve a escanear QR.');
+      }
+    } else if (connection === 'open') {
+      console.log('✅ Conectado a WhatsApp con sesión guardada');
+    }
+  });
 
   client.ev.on('messages.upsert', async (m) => {
     try {
-      if (!m.messages || m.type !== 'notify') return
-
-      const msg = m.messages[0]
-      if (!msg.message || msg.key.fromMe) return
+      if (!m.messages || m.type !== 'notify') return;
+      const msg = m.messages[0];
+      if (!msg.message || msg.key.fromMe) return;
 
       const text =
         msg.message.conversation ||
         msg.message.extendedTextMessage?.text ||
-        ''
+        '';
 
-      const texto = text.toLowerCase()
-      const user = msg.key.participant || msg.key.remoteJid
+      const texto = text.toLowerCase();
+      const user = msg.key.participant || msg.key.remoteJid;
 
       // Sistema automático XP, monedas y niveles
-      addXP(user, 5)
-      addCoins(user, 1)
+      addXP(user, 5);
+      addCoins(user, 1);
 
-      const currentXP = getXP(user)
-      const currentLevel = getNivel(user)
-      const requiredXP = 50 * currentLevel * currentLevel
+      const currentXP = getXP(user);
+      const currentLevel = getNivel(user);
+      const requiredXP = 50 * currentLevel * currentLevel;
 
       if (currentXP >= requiredXP) {
-        addNivel(user, 1)
-        resetXP(user)
+        addNivel(user, 1);
+        resetXP(user);
 
         await client.sendMessage(
           msg.key.remoteJid,
           {
-            text: `🎉 ¡Felicidades @${user.split('@')[0]}! Has subido al nivel ${
-              currentLevel + 1
-            } 🥳`
+            text: `🎉 ¡Felicidades @${user.split('@')[0]}! Has subido al nivel ${currentLevel + 1} 🥳`
           },
           { mentions: [user], quoted: msg }
-        )
+        );
       }
 
       // Respuestas automáticas sin prefijo
       for (const clave in respuestas) {
         if (texto.includes(clave)) {
-          const reply = getRandom(respuestas[clave])
-          await client.sendMessage(msg.key.remoteJid, { text: reply }, { quoted: msg })
-          return
+          const reply = getRandom(respuestas[clave]);
+          await client.sendMessage(msg.key.remoteJid, { text: reply }, { quoted: msg });
+          return;
         }
       }
 
-      if (!texto.startsWith(prefix)) return
+      if (!texto.startsWith(prefix)) return;
 
-      const sinPrefijo = texto.slice(prefix.length).trim()
-      const args = sinPrefijo.split(/ +/)
+      const sinPrefijo = texto.slice(prefix.length).trim();
+      const args = sinPrefijo.split(/ +/);
 
-      const command = args.length > 1 ? `${args[0]} ${args[1]}` : args[0]
-      const finalArgs = args.slice(command.includes(' ') ? 2 : 1)
+      const command = args.length > 1 ? `${args[0]} ${args[1]}` : args[0];
+      const finalArgs = args.slice(command.includes(' ') ? 2 : 1);
 
       const adminCommands = [
         'tag',
@@ -103,34 +134,34 @@ async function startBot() {
         'anclar',
         'desanclar',
         'modo lento'
-      ]
+      ];
 
       if (adminCommands.includes(command)) {
-        await admin(client, msg, command, finalArgs)
-        return
+        await admin(client, msg, command, finalArgs);
+        return;
       }
 
       // Comandos monedas
       if (command === 'coins') {
-        await coinsCommand(client, msg)
-        return
+        await coinsCommand(client, msg);
+        return;
       } else if (command === 'trabajar') {
-        await trabajarCommand(client, msg)
-        return
+        await trabajarCommand(client, msg);
+        return;
       } else if (command === 'addcoins') {
-        const amount = parseInt(finalArgs[0]) || 0
-        if (amount > 0) await addCoinsCommand(client, msg, amount)
-        return
+        const amount = parseInt(finalArgs[0]) || 0;
+        if (amount > 0) await addCoinsCommand(client, msg, amount);
+        return;
       }
 
       // Comandos niveles
       if (command === 'nivel') {
-        await nivelCommand(client, msg)
-        return
+        await nivelCommand(client, msg);
+        return;
       } else if (command === 'addnivel') {
-        const amount = parseInt(finalArgs[0]) || 0
-        if (amount > 0) await addNivelCommand(client, msg, amount)
-        return
+        const amount = parseInt(finalArgs[0]) || 0;
+        if (amount > 0) await addNivelCommand(client, msg, amount);
+        return;
       }
 
       // Otros comandos (juegos, acciones, etc.) aquí...
@@ -139,25 +170,12 @@ async function startBot() {
         msg.key.remoteJid,
         { text: 'Comando no reconocido, usa .menu para ver la lista.' },
         { quoted: msg }
-      )
-    } catch (error) {
-      console.error('Error en messages.upsert:', error)
-    }
-  })
+      );
 
-  client.ev.on('connection.update', (update) => {
-    const { connection, lastDisconnect } = update
-    if (connection === 'close') {
-      console.log('Conexión cerrada, intentando reconectar...')
-      if (lastDisconnect?.error?.output?.statusCode !== 401) {
-        startBot()
-      } else {
-        console.log('Error de autenticación, elimina auth_info_multi.json y vuelve a escanear QR.')
-      }
-    } else if (connection === 'open') {
-      console.log('✅ Conectado a WhatsApp con sesión guardada')
+    } catch (error) {
+      console.error('Error en messages.upsert:', error);
     }
-  })
+  });
 }
 
-startBot()
+startBot();
