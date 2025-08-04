@@ -1,9 +1,8 @@
-const { default: makeWASocket, useSingleFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
-const P = require('pino');
-const cfonts = require('cfonts');
-const { Boom } = require('@hapi/boom');
+const baileys = require('@whiskeysockets/baileys');
+const makeWASocket = baileys.default;
+const { DisconnectReason, fetchLatestBaileysVersion } = baileys;
+const { useSingleFileAuthState } = require('@whiskeysockets/baileys/lib/auth');
 
-// Importar tus módulos
 const admin = require('./src/admin.js');
 const acciones = require('./src/acciones.js');
 const juegos = require('./src/juegos.js');
@@ -34,24 +33,12 @@ function getRandom(arr) {
 }
 
 async function startBot() {
-  cfonts.say('Matt-Bot', {
-    font: 'block',
-    align: 'center',
-    colors: ['cyan'],
-    background: 'transparent',
-    letterSpacing: 1,
-    lineHeight: 1,
-    space: true,
-    maxLength: '0',
-  });
-
   const { version } = await fetchLatestBaileysVersion();
 
   const client = makeWASocket({
     version,
     printQRInTerminal: true,
     auth: state,
-    logger: P({ level: 'silent' }),
   });
 
   client.ev.on('creds.update', saveState);
