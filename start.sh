@@ -1,40 +1,21 @@
 #!/bin/bash
+# Script avanzado para Matt-Bot en Termux
 
-# Matt-Bot - Script de inicio
-# by Sam
+LOG_DIR="./logs"
+LOG_FILE="$LOG_DIR/mattbot.log"
 
-echo "Iniciando Matt-Bot 🚬..."
-echo "Verificando dependencias..."
+echo "🧹 Limpiando node_modules y cache..."
+rm -rf node_modules package-lock.json
+npm cache clean --force
 
-# Verificar que node esté instalado
-if ! command -v node &> /dev/null
-then
-    echo "❌ Node.js no está instalado. Instálalo con:"
-    echo "   pkg install nodejs"
-    exit 1
+echo "📦 Instalando dependencias..."
+npm install
+
+# Crear carpeta logs si no existe
+if [ ! -d "$LOG_DIR" ]; then
+  mkdir "$LOG_DIR"
 fi
 
-# Verificar que npm esté instalado
-if ! command -v npm &> /dev/null
-then
-    echo "❌ npm no está instalado. Instálalo con:"
-    echo "   pkg install npm"
-    exit 1
-fi
-
-# Verificar que termux-setup-storage se haya ejecutado
-if [ ! -d "$HOME/storage" ]; then
-  echo "⚠️ No se detectó permiso de almacenamiento (termux-setup-storage)."
-  echo "Ejecuta 'termux-setup-storage' y reinicia Termux antes de continuar."
-  exit 1
-fi
-
-# Verificar que haya node_modules
-if [ ! -d "node_modules" ]; then
-    echo "📦 Instalando dependencias..."
-    npm install
-fi
-
-# Iniciar el bot
-echo "✅ Ejecutando el bot..."
-node index.js
+echo "🚀 Iniciando Matt-Bot con nodemon (logs en $LOG_FILE)..."
+# Ejecuta nodemon, redirigiendo stdout y stderr a log
+nodemon index.js >> "$LOG_FILE" 2>&1
