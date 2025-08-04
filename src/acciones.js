@@ -1,4 +1,4 @@
-const acciones = {
+const accionesGifs = {
   abrazar: [
     'https://media.giphy.com/media/l2QDM9Jnim1YVILXa/giphy.gif',
     'https://media.tenor.com/images/8ecf5ae8f7b9d969e07075ff92b4ab43/tenor.gif',
@@ -81,15 +81,19 @@ function getRandomGif(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-export default async function acciones(client, msg, command) {
-  if (!acciones[command]) {
+async function acciones(client, msg, command) {
+  if (!accionesGifs[command]) {
     await msg.reply('Comando de acción no encontrado.');
     return;
   }
-  const gif = getRandomGif(acciones[command]);
+
+  const gif = getRandomGif(accionesGifs[command]);
+
   await client.sendMessage(msg.from, {
     video: { url: gif },
     gifPlayback: true,
     caption: `*${command.charAt(0).toUpperCase() + command.slice(1)}*`,
   });
 }
+
+export default acciones;
