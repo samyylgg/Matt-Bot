@@ -1,4 +1,5 @@
-import { create } from '@whiskeysockets/baileys';
+import baileys from '@whiskeysockets/baileys';
+const { create } = baileys;
 import acciones from './src/acciones.js';
 import admin from './src/admin.js';
 import juegos from './src/juegos.js';
