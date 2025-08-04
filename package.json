@@ -1,41 +1,17 @@
 {
-  "name": "Matt-Bot",
+  "name": "Matt-bot",
   "version": "1.0.0",
-  "description": "Matt-Bot para WhatsApp multi-dispositivo",
+  "description": "Bot Matt para Whatsapp",
+  "type": "module",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "lite": "node .",
-    "matt": "./start.sh"
+    "start": "node index.js"
   },
-  "keywords": [
-    "whatsapp-bot",
-    "baileys",
-    "matt-bot",
-    "chatbot",
-    "sam"
-  ],
   "author": "Sam",
   "license": "MIT",
-  "type": "module",
   "dependencies": {
-    "@whiskeysockets/baileys": "^6.7.0",
+    "@whiskeysockets/baileys": "^6.7.16",
     "chalk": "^5.3.0",
-    "figlet": "^1.5.2",
-    "fs-extra": "^11.2.0",
-    "moment-timezone": "^0.5.40",
-    "node-fetch": "^3.3.2"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.2"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/samyylgg/Matt-Bot.git"
-  },
-  "bugs": {
-    "url": "https://github.com/samyylgg/Matt-Bot/issues"
-  },
-  "homepage": "https://github.com/samyylgg/Matt-Bot#readme"
+    "pino": "^8.13.0"
+  }
 }
