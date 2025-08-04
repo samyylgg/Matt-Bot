@@ -11,7 +11,7 @@ if ! command -v node &> /dev/null
 then
     echo "❌ Node.js no está instalado. Instálalo con:"
     echo "   pkg install nodejs"
-    exit
+    exit 1
 fi
 
 # Verificar que npm esté instalado
@@ -19,7 +19,14 @@ if ! command -v npm &> /dev/null
 then
     echo "❌ npm no está instalado. Instálalo con:"
     echo "   pkg install npm"
-    exit
+    exit 1
+fi
+
+# Verificar que termux-setup-storage se haya ejecutado
+if [ ! -d "$HOME/storage" ]; then
+  echo "⚠️ No se detectó permiso de almacenamiento (termux-setup-storage)."
+  echo "Ejecuta 'termux-setup-storage' y reinicia Termux antes de continuar."
+  exit 1
 fi
 
 # Verificar que haya node_modules
