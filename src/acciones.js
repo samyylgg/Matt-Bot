@@ -86,9 +86,7 @@ async function acciones(client, msg, command) {
     await msg.reply('Comando de acción no encontrado.');
     return;
   }
-
   const gif = getRandomGif(accionesGifs[command]);
-
   await client.sendMessage(msg.from, {
     video: { url: gif },
     gifPlayback: true,
