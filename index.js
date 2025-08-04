@@ -45,35 +45,13 @@ async function startBot() {
 
       // Listas comandos
       const adminCommands = ['tag', 'grupo abrir', 'grupo cerrar', 'setreglas', 'reglas', 'ban', 'anclar', 'desanclar', 'modo lento'];
-      const accionesList = ['abrazar', 'besar', 'saludar', 'acariciar', 'reir', 'llorar', 'dormir', 'bailar', 'cantar', 'enojar', 'pensar', 'saludarmanos', 'saltar', 'comer', 'beber', 'patear', 'chocar', 'empujar', 'saludarHola'];
-      const juegosList = ['piedrapapeltijera', 'unirse', 'piedra', 'papel', 'tijera'];
-      const extrasList = ['meme', 'hora', 'fecha', 'frase', 'say', 'dog', 'info', 'ping', 'chiste', 'gif', 'menu', 'profile'];
-      const premiumList = ['trivia', 'play', 'sorteo', 'clima', 'traducir'];
 
       if (adminCommands.includes(command)) {
         await admin(client, msg, command, args);
         return;
       }
 
-      if (accionesList.includes(command)) {
-        await acciones(client, msg, command, args);
-        return;
-      }
-
-      if (juegosList.includes(command)) {
-        await juegos(client, msg, command, args);
-        return;
-      }
-
-      if (extrasList.includes(command)) {
-        await extras(client, msg, command, args);
-        return;
-      }
-
-      if (premiumList.includes(command)) {
-        await premium(client, msg, command, args);
-        return;
-      }
+      // Aquí puedes añadir llamadas a acciones, juegos, extras, premium, etc.
 
       await client.sendMessage(msg.key.remoteJid, { text: 'Comando no reconocido, usa .menu para ver la lista.' }, { quoted: msg });
 
@@ -95,7 +73,7 @@ async function startBot() {
   });
 
   client.ev.on('creds.update', () => {
-    // Guardar credenciales si usas persistencia
+    // Aquí guarda credenciales si quieres persistencia
   });
 }
 
