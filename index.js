@@ -1,4 +1,5 @@
-import { create } from '@whiskeysockets/baileys';
+import { create, useSingleFileAuthState } from '@whiskeysockets/baileys';
+
 import admin from './src/admin.js';
 import acciones from './src/acciones.js';
 import juegos from './src/juegos.js';
@@ -6,14 +7,27 @@ import extras from './src/extras.js';
 import premium from './src/premium.js';
 import { respuestas } from './src/respuestas.js';
 
+import { getCoins, addCoins } from './src/monedas.js';
+import { coinsCommand, trabajarCommand, addCoinsCommand } from './src/monedas.js';
+
+import { getNivel, addNivel, nivelCommand, addNivelCommand } from './src/niveles.js';
+
+import { getXP, addXP } from './src/xp.js';
+
 const prefix = '.';
+const { state, saveState } = useSingleFileAuthState('./auth_info_multi.json');
 
 function getRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
 async function startBot() {
-  const client = await create({});
+  const client = await create({
+    auth: state,
+    printQRInTerminal: true
+  });
+
+  client.ev.on('creds.update', saveState);
 
   client.ev.on('messages.upsert', async (m) => {
     try {
@@ -26,10 +40,34 @@ async function startBot() {
         msg.message.conversation ||
         msg.message.extendedTextMessage?.text ||
         '';
-
       const texto = text.toLowerCase();
 
-      // 🟢 Respuestas automáticas sin prefijo
+      const user = msg.key.participant || msg.key.remoteJid;
+
+      // Sistema automático XP, monedas y niveles
+      addXP(user, 5);
+      addCoins(user, 1);
+
+      const currentXP = getXP(user);
+      const currentLevel = getNivel(user);
+      const requiredXP = 50 * currentLevel * currentLevel;
+
+      if (currentXP >= requiredXP) {
+        addNivel(user, 1);
+        // Resetear XP
+        const fs = await import('fs');
+        const xpData = JSON.parse(fs.readFileSync('./data/xp.json'));
+        xpData[user] = 0;
+        fs.writeFileSync('./data/xp.json', JSON.stringify(xpData, null, 2));
+
+        await client.sendMessage(
+          msg.key.remoteJid,
+          { text: `🎉 ¡Felicidades @${user.split('@')[0]}! Has subido al nivel ${currentLevel + 1} 🥳` },
+          { mentions: [user], quoted: msg }
+        );
+      }
+
+      // Respuestas automáticas sin prefijo
       for (const clave in respuestas) {
         if (texto.includes(clave)) {
           const reply = getRandom(respuestas[clave]);
@@ -42,15 +80,10 @@ async function startBot() {
 
       const sinPrefijo = texto.slice(prefix.length).trim();
       const args = sinPrefijo.split(/ +/);
-      
-      // 🔄 Tomar uno o dos términos como comando
-      const command = args.length > 1 
-        ? `${args[0]} ${args[1]}` 
-        : args[0];
 
+      const command = args.length > 1 ? `${args[0]} ${args[1]}` : args[0];
       const finalArgs = args.slice(command.includes(' ') ? 2 : 1);
 
-      // ✅ Lista de comandos admin con espacio
       const adminCommands = [
         'tag',
         'grupo abrir',
@@ -68,7 +101,30 @@ async function startBot() {
         return;
       }
 
-      // Aquí puedes añadir llamadas a juegos, acciones, extras, premium, etc.
+      // Comandos monedas
+      if (command === 'coins') {
+        await coinsCommand(client, msg);
+        return;
+      } else if (command === 'trabajar') {
+        await trabajarCommand(client, msg);
+        return;
+      } else if (command === 'addcoins') {
+        const amount = parseInt(finalArgs[0]) || 0;
+        if (amount > 0) await addCoinsCommand(client, msg, amount);
+        return;
+      }
+
+      // Comandos niveles
+      if (command === 'nivel') {
+        await nivelCommand(client, msg);
+        return;
+      } else if (command === 'addnivel') {
+        const amount = parseInt(finalArgs[0]) || 0;
+        if (amount > 0) await addNivelCommand(client, msg, amount);
+        return;
+      }
+
+      // Otros comandos (juegos, acciones, etc.) aquí...
 
       await client.sendMessage(
         msg.key.remoteJid,
@@ -87,14 +143,12 @@ async function startBot() {
       console.log('Conexión cerrada, intentando reconectar...');
       if (lastDisconnect?.error?.output?.statusCode !== 401) {
         startBot();
+      } else {
+        console.log('Error de autenticación, elimina auth_info_multi.json y vuelve a escanear QR.');
       }
     } else if (connection === 'open') {
-      console.log('✅ Conectado a WhatsApp');
+      console.log('✅ Conectado a WhatsApp con sesión guardada');
     }
-  });
-
-  client.ev.on('creds.update', () => {
-    // Aquí puedes guardar las credenciales si usas persistencia
   });
 }
 
