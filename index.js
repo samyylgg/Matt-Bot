@@ -1,5 +1,4 @@
-import baileys from '@whiskeysockets/baileys';
-const { create } = baileys;
+import { create } from '@whiskeysockets/baileys';
 import acciones from './src/acciones.js';
 import admin from './src/admin.js';
 import juegos from './src/juegos.js';
@@ -31,30 +30,28 @@ async function startBot() {
 
       const texto = text.toLowerCase();
 
-      // Respuestas automáticas a palabras clave sin prefijo
+      // Respuestas automáticas sin prefijo
       for (const clave in respuestas) {
         if (texto.includes(clave)) {
           const reply = getRandom(respuestas[clave]);
           await client.sendMessage(msg.key.remoteJid, { text: reply }, { quoted: msg });
-          return; // Si respondió aquí, no procesar más
+          return; // no seguir procesando
         }
       }
 
-      // Procesar solo mensajes que inician con el prefijo
       if (!texto.startsWith(prefix)) return;
 
       // Extraer comando y argumentos
       const args = texto.slice(prefix.length).trim().split(/ +/);
       const command = args.shift();
 
-      // Listas de comandos para cada módulo
+      // Listas de comandos
       const adminCommands = ['tag', 'grupo abrir', 'grupo cerrar', 'setreglas', 'reglas', 'ban', 'anclar', 'desanclar', 'modo lento'];
       const accionesList = ['abrazar', 'besar', 'saludar', 'acariciar', 'reir', 'llorar', 'dormir', 'bailar', 'cantar', 'enojar', 'pensar', 'saludarmanos', 'saltar', 'comer', 'beber', 'patear', 'chocar', 'empujar', 'saludarHola'];
       const juegosList = ['piedrapapeltijera', 'unirse', 'piedra', 'papel', 'tijera'];
       const extrasList = ['meme', 'hora', 'fecha', 'frase', 'say', 'dog', 'info', 'ping', 'chiste', 'gif', 'menu', 'profile'];
       const premiumList = ['trivia', 'play', 'sorteo', 'clima', 'traducir'];
 
-      // Ejecutar el módulo correspondiente
       if (adminCommands.includes(command)) {
         await admin(client, msg, command, args);
         return;
@@ -80,9 +77,7 @@ async function startBot() {
         return;
       }
 
-      // Si el comando no está reconocido
       await client.sendMessage(msg.key.remoteJid, { text: 'Comando no reconocido, usa .menu para ver la lista.' }, { quoted: msg });
-
     } catch (error) {
       console.error('Error en messages.upsert:', error);
     }
@@ -90,7 +85,6 @@ async function startBot() {
 
   client.ev.on('connection.update', (update) => {
     const { connection, lastDisconnect } = update;
-
     if (connection === 'close') {
       console.log('Conexión cerrada, intentando reconectar...');
       if (lastDisconnect?.error?.output?.statusCode !== 401) {
@@ -102,7 +96,7 @@ async function startBot() {
   });
 
   client.ev.on('creds.update', () => {
-    // Aquí guardar credenciales si tienes persistencia
+    // Guardar credenciales aquí si usas persistencia
   });
 }
 
