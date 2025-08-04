@@ -1,7 +1,6 @@
 const baileys = require('@whiskeysockets/baileys');
 const makeWASocket = baileys.default;
-const { DisconnectReason, fetchLatestBaileysVersion } = baileys;
-const { useSingleFileAuthState } = require('@whiskeysockets/baileys/lib/auth');
+const { DisconnectReason, fetchLatestBaileysVersion, useSingleFileAuthState } = baileys;
 
 const admin = require('./src/admin.js');
 const acciones = require('./src/acciones.js');
@@ -9,6 +8,7 @@ const juegos = require('./src/juegos.js');
 const extras = require('./src/extras.js');
 const premium = require('./src/premium.js');
 const { respuestas } = require('./src/respuestas.js');
+
 const {
   coinsCommand,
   trabajarCommand,
@@ -16,12 +16,14 @@ const {
   getCoins,
   addCoins
 } = require('./src/monedas.js');
+
 const {
   nivelCommand,
   addNivelCommand,
   getNivel,
   addNivel
 } = require('./src/niveles.js');
+
 const { getXP, addXP, resetXP } = require('./src/xp.js');
 
 const prefix = '.';
@@ -38,30 +40,15 @@ async function startBot() {
   const client = makeWASocket({
     version,
     printQRInTerminal: true,
-    auth: state,
+    auth: state
   });
 
   client.ev.on('creds.update', saveState);
 
-  client.ev.on('connection.update', (update) => {
-    const { connection, lastDisconnect } = update;
-    if (connection === 'close') {
-      const statusCode = lastDisconnect?.error?.output?.statusCode || null;
-      console.log('Conexión cerrada:', statusCode);
-      if (statusCode !== DisconnectReason.loggedOut) {
-        console.log('Intentando reconectar...');
-        startBot();
-      } else {
-        console.log('Error de autenticación, elimina auth_info_multi.json y vuelve a escanear QR.');
-      }
-    } else if (connection === 'open') {
-      console.log('✅ Conectado a WhatsApp con sesión guardada');
-    }
-  });
-
   client.ev.on('messages.upsert', async (m) => {
     try {
       if (!m.messages || m.type !== 'notify') return;
+
       const msg = m.messages[0];
       if (!msg.message || msg.key.fromMe) return;
 
@@ -88,7 +75,9 @@ async function startBot() {
         await client.sendMessage(
           msg.key.remoteJid,
           {
-            text: `🎉 ¡Felicidades @${user.split('@')[0]}! Has subido al nivel ${currentLevel + 1} 🥳`
+            text: `🎉 ¡Felicidades @${user.split('@')[0]}! Has subido al nivel ${
+              currentLevel + 1
+            } 🥳`
           },
           { mentions: [user], quoted: msg }
         );
@@ -158,9 +147,22 @@ async function startBot() {
         { text: 'Comando no reconocido, usa .menu para ver la lista.' },
         { quoted: msg }
       );
-
     } catch (error) {
       console.error('Error en messages.upsert:', error);
+    }
+  });
+
+  client.ev.on('connection.update', (update) => {
+    const { connection, lastDisconnect } = update;
+    if (connection === 'close') {
+      console.log('Conexión cerrada, intentando reconectar...');
+      if (lastDisconnect?.error?.output?.statusCode !== 401) {
+        startBot();
+      } else {
+        console.log('Error de autenticación, elimina auth_info_multi.json y vuelve a escanear QR.');
+      }
+    } else if (connection === 'open') {
+      console.log('✅ Conectado a WhatsApp con sesión guardada');
     }
   });
 }
