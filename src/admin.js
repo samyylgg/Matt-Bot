@@ -1,112 +1,135 @@
+import fs from 'fs';
+
+const reglasPath = './data/reglas.json';
+
+function guardarReglas(jid, textoReglas) {
+  let reglasData = {};
+  if (fs.existsSync(reglasPath)) {
+    reglasData = JSON.parse(fs.readFileSync(reglasPath));
+  }
+  reglasData[jid] = textoReglas;
+  fs.writeFileSync(reglasPath, JSON.stringify(reglasData, null, 2));
+}
+
+function leerReglas(jid) {
+  if (!fs.existsSync(reglasPath)) return null;
+  const reglasData = JSON.parse(fs.readFileSync(reglasPath));
+  return reglasData[jid] || null;
+}
+
 export default async function admin(client, msg, command) {
-  const isGroup = msg.from.endsWith('@g.us');
-  if (!isGroup) return;
+  const jid = msg.key.remoteJid;
+  if (!jid.endsWith('@g.us')) return; // Solo grupos
 
-  const chat = await msg.getChat();
-  const sender = await client.getContactById(msg.author || msg.from);
+  const chat = await client.groupMetadata(jid);
+  const senderId = msg.key.participant || msg.key.remoteJid;
 
-  const isAdmin = chat.participants.find((p) => p.id._serialized === sender.id._serialized)?.admin || false;
-  const isOwner = chat.owner === sender.id._serialized;
+  const participante = chat.participants.find(p => p.id === senderId);
+  const isAdmin = participante?.admin === 'admin' || participante?.admin === 'superadmin';
+  const isOwner = chat.owner === senderId;
 
-  if (command === 'tag') {
-    if (!isAdmin && !isOwner) {
-      await msg.reply('Solo administradores pueden usar este comando.');
-      return;
-    }
-    let mentions = [];
-    let text = '';
-    for (const p of chat.participants) {
-      const contact = await client.getContactById(p.id._serialized);
-      mentions.push(contact);
-      text += `@${contact.number} `;
-    }
-    await chat.sendMessage(text.trim(), { mentions });
+  // Comprobar permisos
+  if (
+    ['tag', 'grupo abrir', 'grupo cerrar', 'setreglas', 'ban', 'anclar', 'desanclar', 'modo lento'].includes(command)
+    && !isAdmin && !isOwner
+  ) {
+    await client.sendMessage(jid, { text: '⚠️ Solo administradores pueden usar este comando.' }, { quoted: msg });
     return;
   }
 
-  if (command === 'grupo abrir') {
-    if (!isAdmin && !isOwner) {
-      await msg.reply('Solo administradores pueden usar este comando.');
-      return;
+  switch (command) {
+    case 'tag': {
+      let mentions = [];
+      let texto = '';
+      for (const p of chat.participants) {
+        mentions.push({ id: p.id, role: p.admin || 'user' });
+        texto += `@${p.id.split('@')[0]} `;
+      }
+      await client.sendMessage(jid, { text: texto.trim(), mentions });
+      break;
     }
-    await chat.setMessagesAdminsOnly(false);
-    await msg.reply('Grupo abierto ✅');
-    return;
-  }
 
-  if (command === 'grupo cerrar') {
-    if (!isAdmin && !isOwner) {
-      await msg.reply('Solo administradores pueden usar este comando.');
-      return;
+    case 'grupo abrir': {
+      await client.groupSettingUpdate(jid, 'announcement', false);
+      await client.sendMessage(jid, { text: '✅ Grupo abierto para todos.' });
+      break;
     }
-    await chat.setMessagesAdminsOnly(true);
-    await msg.reply('Grupo cerrado ❌');
-    return;
-  }
 
-  if (command.startsWith('setreglas')) {
-    if (!isAdmin && !isOwner) {
-      await msg.reply('Solo administradores pueden usar este comando.');
-      return;
+    case 'grupo cerrar': {
+      await client.groupSettingUpdate(jid, 'announcement', true);
+      await client.sendMessage(jid, { text: '❌ Grupo cerrado solo para admins.' });
+      break;
     }
-    const reglas = msg.body.slice(msg.body.indexOf(' ') + 1).trim();
-    chat.groupMetadata.rules = reglas;
-    await msg.reply('Reglas guardadas.');
-    return;
-  }
 
-  if (command === 'reglas') {
-    await msg.reply(chat.groupMetadata.rules || 'No se han definido reglas aún.');
-    return;
-  }
+    case 'setreglas': {
+      const body = msg.message?.conversation || msg.message?.extendedTextMessage?.text || '';
+      const textoReglas = body.slice(body.indexOf(' ') + 1).trim();
+      if (!textoReglas) {
+        await client.sendMessage(jid, { text: 'Escribe las reglas después del comando.' }, { quoted: msg });
+        break;
+      }
+      guardarReglas(jid, textoReglas);
+      await client.sendMessage(jid, { text: '📜 Reglas guardadas correctamente.' });
+      break;
+    }
 
-  if (command.startsWith('ban')) {
-    if (!isAdmin && !isOwner) {
-      await msg.reply('Solo administradores pueden usar este comando.');
-      return;
+    case 'reglas': {
+      const reglas = leerReglas(jid);
+      if (!reglas) {
+        await client.sendMessage(jid, { text: 'No hay reglas definidas para este grupo.' });
+        break;
+      }
+      await client.sendMessage(jid, { text: `📜 Reglas del grupo:\n\n${reglas}` });
+      break;
     }
-    if (msg.mentionedIds.length === 0) {
-      await msg.reply('Menciona a la persona que deseas banear.');
-      return;
-    }
-    for (const id of msg.mentionedIds) {
-      await chat.removeParticipants([id]);
-    }
-    await msg.reply('Usuario(s) baneado(s).');
-    return;
-  }
 
-  if (command === 'anclar') {
-    if (!isAdmin && !isOwner) {
-      await msg.reply('Solo administradores pueden usar este comando.');
-      return;
+    case 'ban': {
+      if (!msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
+        await client.sendMessage(jid, { text: 'Menciona al usuario que deseas banear.' }, { quoted: msg });
+        break;
+      }
+      const usuariosBan = msg.message.extendedTextMessage.contextInfo.mentionedJid;
+      try {
+        await client.groupParticipantsUpdate(jid, usuariosBan, 'remove');
+        await client.sendMessage(jid, { text: 'Usuario(s) baneado(s) correctamente.' });
+      } catch {
+        await client.sendMessage(jid, { text: 'No se pudo banear a uno o más usuarios.' });
+      }
+      break;
     }
-    const msgs = await chat.fetchMessages({ limit: 1 });
-    if (msgs.length > 0) {
-      await chat.pinMessage(msgs[0]);
-      await msg.reply('Mensaje anclado.');
-    } else {
-      await msg.reply('No hay mensajes para anclar.');
-    }
-    return;
-  }
 
-  if (command === 'desanclar') {
-    if (!isAdmin && !isOwner) {
-      await msg.reply('Solo administradores pueden usar este comando.');
-      return;
+    case 'anclar': {
+      try {
+        await client.groupPinMessage(jid, msg.key.id);
+        await client.sendMessage(jid, { text: 'Mensaje anclado.' });
+      } catch {
+        await client.sendMessage(jid, { text: 'No se pudo anclar el mensaje.' });
+      }
+      break;
     }
-    await chat.unpinAllMessages();
-    await msg.reply('Mensajes desanclados.');
-    return;
-  }
 
-  if (command === 'modo lento') {
-    if (!isAdmin && !isOwner) {
-      await msg.reply('Solo administradores pueden usar este comando.');
-      return;
+    case 'desanclar': {
+      try {
+        await client.groupUnpinAllMessages(jid);
+        await client.sendMessage(jid, { text: 'Mensajes desanclados.' });
+      } catch {
+        await client.sendMessage(jid, { text: 'No se pudieron desanclar los mensajes.' });
+      }
+      break;
     }
-    await msg.reply('Modo lento activado (función demo).');
-    return;
+
+    case 'modo lento': {
+      try {
+        // Cambia el número 10 por los segundos que quieras para slowmode
+        await client.groupSettingUpdate(jid, 'slowmode', 10);
+        await client.sendMessage(jid, { text: 'Modo lento activado: 10 segundos entre mensajes.' });
+      } catch {
+        await client.sendMessage(jid, { text: 'No se pudo activar el modo lento.' });
+      }
+      break;
+    }
+
+    default:
+      await client.sendMessage(jid, { text: 'Comando de admin no reconocido.' }, { quoted: msg });
   }
 }
