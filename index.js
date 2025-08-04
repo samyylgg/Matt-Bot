@@ -29,7 +29,7 @@ async function startBot() {
 
       const texto = text.toLowerCase();
 
-      // Respuestas automáticas sin prefijo
+      // 🟢 Respuestas automáticas sin prefijo
       for (const clave in respuestas) {
         if (texto.includes(clave)) {
           const reply = getRandom(respuestas[clave]);
@@ -40,20 +40,41 @@ async function startBot() {
 
       if (!texto.startsWith(prefix)) return;
 
-      const args = texto.slice(prefix.length).trim().split(/ +/);
-      const command = args.shift();
+      const sinPrefijo = texto.slice(prefix.length).trim();
+      const args = sinPrefijo.split(/ +/);
+      
+      // 🔄 Tomar uno o dos términos como comando
+      const command = args.length > 1 
+        ? `${args[0]} ${args[1]}` 
+        : args[0];
 
-      // Listas comandos
-      const adminCommands = ['tag', 'grupo abrir', 'grupo cerrar', 'setreglas', 'reglas', 'ban', 'anclar', 'desanclar', 'modo lento'];
+      const finalArgs = args.slice(command.includes(' ') ? 2 : 1);
+
+      // ✅ Lista de comandos admin con espacio
+      const adminCommands = [
+        'tag',
+        'grupo abrir',
+        'grupo cerrar',
+        'setreglas',
+        'reglas',
+        'ban',
+        'anclar',
+        'desanclar',
+        'modo lento'
+      ];
 
       if (adminCommands.includes(command)) {
-        await admin(client, msg, command, args);
+        await admin(client, msg, command, finalArgs);
         return;
       }
 
-      // Aquí puedes añadir llamadas a acciones, juegos, extras, premium, etc.
+      // Aquí puedes añadir llamadas a juegos, acciones, extras, premium, etc.
 
-      await client.sendMessage(msg.key.remoteJid, { text: 'Comando no reconocido, usa .menu para ver la lista.' }, { quoted: msg });
+      await client.sendMessage(
+        msg.key.remoteJid,
+        { text: 'Comando no reconocido, usa .menu para ver la lista.' },
+        { quoted: msg }
+      );
 
     } catch (error) {
       console.error('Error en messages.upsert:', error);
@@ -68,12 +89,12 @@ async function startBot() {
         startBot();
       }
     } else if (connection === 'open') {
-      console.log('Conectado a WhatsApp');
+      console.log('✅ Conectado a WhatsApp');
     }
   });
 
   client.ev.on('creds.update', () => {
-    // Aquí guarda credenciales si quieres persistencia
+    // Aquí puedes guardar las credenciales si usas persistencia
   });
 }
 
