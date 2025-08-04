@@ -3,9 +3,17 @@ export default async function admin(client, msg, command, args) {
   const sender = msg.key.participant || msg.key.remoteJid;
   const textArgs = args.join(' ');
 
+  // Obtener metadata del grupo y verificar si el remitente es admin
+  const groupMetadata = await client.groupMetadata(jid);
+  const isAdmin = groupMetadata.participants.find(p => p.id === sender)?.admin !== undefined;
+
+  if (!isAdmin) {
+    await client.sendMessage(jid, { text: '❌ Solo los administradores pueden usar este comando.' }, { quoted: msg });
+    return;
+  }
+
   switch (command) {
     case 'tag':
-      const groupMetadata = await client.groupMetadata(jid);
       const mentions = groupMetadata.participants.map(p => p.id);
       await client.sendMessage(jid, {
         text: textArgs || '¡Todos!',
