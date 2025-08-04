@@ -1,28 +1,27 @@
-import { create, useSingleFileAuthState } from '@whiskeysockets/baileys'
+const { create, useSingleFileAuthState } = require('@whiskeysockets/baileys')
+const admin = require('./src/admin.js')
+const acciones = require('./src/acciones.js')
+const juegos = require('./src/juegos.js')
+const extras = require('./src/extras.js')
+const premium = require('./src/premium.js')
+const { respuestas } = require('./src/respuestas.js')
 
-import admin from './src/admin.js'
-import acciones from './src/acciones.js'
-import juegos from './src/juegos.js'
-import extras from './src/extras.js'
-import premium from './src/premium.js'
-import { respuestas } from './src/respuestas.js'
-
-import {
+const {
   coinsCommand,
   trabajarCommand,
   addCoinsCommand,
   getCoins,
   addCoins
-} from './src/monedas.js'
+} = require('./src/monedas.js')
 
-import {
+const {
   nivelCommand,
   addNivelCommand,
   getNivel,
   addNivel
-} from './src/niveles.js'
+} = require('./src/niveles.js')
 
-import { getXP, addXP, resetXP } from './src/xp.js'
+const { getXP, addXP, resetXP } = require('./src/xp.js')
 
 const prefix = '.'
 const { state, saveState } = useSingleFileAuthState('./auth_info_multi.json')
