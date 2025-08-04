@@ -96,4 +96,7 @@ async function acciones(client, msg, command) {
   });
 }
 
-export default acciones;
+// ✅ Así SÍ está bien
+export default async function acciones(client, msg, command) {
+  // tu código
+}
