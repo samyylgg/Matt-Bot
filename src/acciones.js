@@ -96,8 +96,4 @@ async function acciones(client, msg, command) {
   });
 }
 
-async function acciones(client, msg, command) {
-  // tu código...
-}
-
 export default acciones;
