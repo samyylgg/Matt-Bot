@@ -1,5 +1,4 @@
 import fs from 'fs';
-import { createCanvas } from 'canvas';
 
 const nivelesPath = './data/niveles.json';
 let niveles = {};
@@ -74,47 +73,14 @@ export default async function extras(client, msg, command, args) {
       const expActual = userData.exp || 0;
       const expRequerida = Math.floor((nivelActual + 1) * 10);
 
-      // Canvas para imagen de perfil
-      const canvas = createCanvas(500, 250);
-      const ctx = canvas.getContext('2d');
-
-      // Fondo
-      ctx.fillStyle = '#1e1e2f';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Tarjeta
-      ctx.fillStyle = '#282c34';
-      ctx.fillRect(20, 20, 460, 210);
-
-      // Texto
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 24px Sans';
-      ctx.fillText('Perfil de Usuario', 40, 50);
-
-      ctx.font = '16px Sans';
-      ctx.fillText(`Nombre: @${senderId.split('@')[0]}`, 40, 90);
-      ctx.fillText(`Nivel: ${nivelActual}`, 40, 130);
-      ctx.fillText(`Exp: ${expActual} / ${expRequerida}`, 40, 170);
-
-      // Barra progreso
-      const barraX = 40;
-      const barraY = 180;
-      const barraWidth = 400;
-      const barraHeight = 20;
-      const progreso = Math.min(expActual / expRequerida, 1);
-
-      ctx.fillStyle = '#555';
-      ctx.fillRect(barraX, barraY, barraWidth, barraHeight);
-      ctx.fillStyle = '#00ff00';
-      ctx.fillRect(barraX, barraY, barraWidth * progreso, barraHeight);
-      ctx.strokeStyle = '#000';
-      ctx.strokeRect(barraX, barraY, barraWidth, barraHeight);
-
-      const buffer = canvas.toBuffer();
+      const textoPerfil = `
+📄 Perfil de @${senderId.split('@')[0]}:
+Nivel: ${nivelActual}
+Experiencia: ${expActual} / ${expRequerida}
+      `;
 
       await client.sendMessage(chatId, {
-        image: buffer,
-        caption: `📄 Perfil de @${senderId.split('@')[0]}`,
+        text: textoPerfil,
         mentions: [senderId],
       }, { quoted: msg });
 
