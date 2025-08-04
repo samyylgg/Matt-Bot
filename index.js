@@ -1,6 +1,6 @@
 import { create } from '@whiskeysockets/baileys';
-import acciones from './src/acciones.js';
 import admin from './src/admin.js';
+import acciones from './src/acciones.js';
 import juegos from './src/juegos.js';
 import extras from './src/extras.js';
 import premium from './src/premium.js';
@@ -22,7 +22,6 @@ async function startBot() {
       const msg = m.messages[0];
       if (!msg.message || msg.key.fromMe) return;
 
-      // Obtener texto del mensaje (soporta mensajes simples y extendidos)
       const text =
         msg.message.conversation ||
         msg.message.extendedTextMessage?.text ||
@@ -35,17 +34,16 @@ async function startBot() {
         if (texto.includes(clave)) {
           const reply = getRandom(respuestas[clave]);
           await client.sendMessage(msg.key.remoteJid, { text: reply }, { quoted: msg });
-          return; // no seguir procesando
+          return;
         }
       }
 
       if (!texto.startsWith(prefix)) return;
 
-      // Extraer comando y argumentos
       const args = texto.slice(prefix.length).trim().split(/ +/);
       const command = args.shift();
 
-      // Listas de comandos
+      // Listas comandos
       const adminCommands = ['tag', 'grupo abrir', 'grupo cerrar', 'setreglas', 'reglas', 'ban', 'anclar', 'desanclar', 'modo lento'];
       const accionesList = ['abrazar', 'besar', 'saludar', 'acariciar', 'reir', 'llorar', 'dormir', 'bailar', 'cantar', 'enojar', 'pensar', 'saludarmanos', 'saltar', 'comer', 'beber', 'patear', 'chocar', 'empujar', 'saludarHola'];
       const juegosList = ['piedrapapeltijera', 'unirse', 'piedra', 'papel', 'tijera'];
@@ -78,6 +76,7 @@ async function startBot() {
       }
 
       await client.sendMessage(msg.key.remoteJid, { text: 'Comando no reconocido, usa .menu para ver la lista.' }, { quoted: msg });
+
     } catch (error) {
       console.error('Error en messages.upsert:', error);
     }
@@ -96,7 +95,7 @@ async function startBot() {
   });
 
   client.ev.on('creds.update', () => {
-    // Guardar credenciales aquí si usas persistencia
+    // Guardar credenciales si usas persistencia
   });
 }
 
