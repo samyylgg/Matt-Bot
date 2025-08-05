@@ -1,12 +1,16 @@
-import makeWASocket, {
-  DisconnectReason,
-  useSingleFileAuthState,
-  fetchLatestBaileysVersion
-} from '@whiskeysockets/baileys'
+import baileys from '@whiskeysockets/baileys'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import cfonts from 'cfonts'
+
+// Desestructura del default import de baileys
+const {
+  default: makeWASocket,
+  DisconnectReason,
+  useSingleFileAuthState,
+  fetchLatestBaileysVersion
+} = baileys
 
 // Importar comandos
 import admin from './src/admin.js'
