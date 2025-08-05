@@ -1,42 +1,40 @@
-import baileys from '@whiskeysockets/baileys'
-import fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
-import cfonts from 'cfonts'
+// index.js para Matt-Bot en CommonJS
 
-// Desestructura del default import de baileys
-const {
-  default: makeWASocket,
-  DisconnectReason,
-  useSingleFileAuthState,
-  fetchLatestBaileysVersion
-} = baileys
+const baileys = require('@whiskeysockets/baileys')
+const { default: makeWASocket, DisconnectReason, useSingleFileAuthState, fetchLatestBaileysVersion } = baileys
+const fs = require('fs')
+const path = require('path')
+const { fileURLToPath } = require('url')
+const cfonts = require('cfonts')
 
 // Importar comandos
-import admin from './src/admin.js'
-import acciones from './src/acciones.js'
-import juegos from './src/juegos.js'
-import extras from './src/extras.js'
-import premium from './src/premium.js'
-import { respuestas } from './src/respuestas.js'
-import {
+const admin = require('./src/admin.js')
+const acciones = require('./src/acciones.js')
+const juegos = require('./src/juegos.js')
+const extras = require('./src/extras.js')
+const premium = require('./src/premium.js')
+const { respuestas } = require('./src/respuestas.js')
+const {
   coinsCommand,
   trabajarCommand,
   addCoinsCommand,
   getCoins,
   addCoins
-} from './src/monedas.js'
-import {
+} = require('./src/monedas.js')
+const {
   nivelCommand,
   addNivelCommand,
   getNivel,
   addNivel
-} from './src/niveles.js'
-import { getXP, addXP, resetXP } from './src/xp.js'
+} = require('./src/niveles.js')
+const { getXP, addXP, resetXP } = require('./src/xp.js')
 
 const prefix = '.'
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+
+// Para __dirname en CommonJS
+const __filename = __filename || path.resolve()
+const __dirnameC = path.dirname(__filename)
+
 const { state, saveState } = useSingleFileAuthState('./auth_info_multi.json')
 
 function getRandom(arr) {
@@ -161,5 +159,4 @@ async function startBot() {
     }
   })
 }
-
 startBot()
