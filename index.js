@@ -166,5 +166,4 @@ async function startBot() {
     }
   });
 }
-
 startBot();
